@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.reply.R
 import com.example.reply.ui.utils.DevicePosture
+import com.example.reply.ui.utils.ReplyContentType
 import com.example.reply.ui.utils.ReplyNavigationType
 import kotlinx.coroutines.launch
 
@@ -50,24 +51,41 @@ fun ReplyApp(
      * This will help us select type of navigation and content type depending on window size and
      * fold state of the device.
      */
-    val navigationType: ReplyNavigationType = when (windowWidthSize) {
-        WindowWidthSizeClass.Compact -> ReplyNavigationType.BOTTOM_NAVIGATION
-        WindowWidthSizeClass.Medium -> ReplyNavigationType.NAVIGATION_RAIL
+    var navigationType: ReplyNavigationType
+    var contentType: ReplyContentType
+
+    when (windowWidthSize) {
+        WindowWidthSizeClass.Compact -> {
+            navigationType = ReplyNavigationType.BOTTOM_NAVIGATION
+            contentType = ReplyContentType.LIST_ONLY
+        }
+        WindowWidthSizeClass.Medium -> {
+            navigationType = ReplyNavigationType.NAVIGATION_RAIL
+            contentType = if (foldingDevicePosture is DevicePosture.BookPosture ||
+                    foldingDevicePosture is DevicePosture.Separating)
+                ReplyContentType.LIST_AND_DETAIL else
+                ReplyContentType.LIST_ONLY
+        }
         WindowWidthSizeClass.Expanded -> {
-            if (foldingDevicePosture is DevicePosture.BookPosture)
+            navigationType = if (foldingDevicePosture is DevicePosture.BookPosture)
                 ReplyNavigationType.NAVIGATION_RAIL else
                 ReplyNavigationType.PERMANENT_NAVIGATION_DRAWER
+            contentType = ReplyContentType.LIST_AND_DETAIL
         }
-        else -> ReplyNavigationType.BOTTOM_NAVIGATION
+        else -> {
+            navigationType = ReplyNavigationType.BOTTOM_NAVIGATION
+            contentType = ReplyContentType.LIST_ONLY
+        }
     }
 
-    ReplyNavigationWrapperUI(navigationType, replyHomeUIState)
+    ReplyNavigationWrapperUI(navigationType, contentType, replyHomeUIState)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ReplyNavigationWrapperUI(
     navigationType: ReplyNavigationType,
+    contentType: ReplyContentType,
     replyHomeUIState: ReplyHomeUIState,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -80,7 +98,7 @@ private fun ReplyNavigationWrapperUI(
                 NavigationDrawerContent(selectedDestination = selectedDestination)
             }
         }) {
-            ReplyAppContent(navigationType, replyHomeUIState)
+            ReplyAppContent(navigationType, contentType, replyHomeUIState)
         }
     } else {
         ModalNavigationDrawer(
@@ -98,7 +116,7 @@ private fun ReplyNavigationWrapperUI(
             },
             drawerState = drawerState
         ) {
-            ReplyAppContent(navigationType, replyHomeUIState, onDrawerClicked = {
+            ReplyAppContent(navigationType, contentType, replyHomeUIState, onDrawerClicked = {
                 scope.launch {
                     drawerState.open()
                 }
@@ -111,6 +129,7 @@ private fun ReplyNavigationWrapperUI(
 @Composable
 fun ReplyAppContent(
     navigationType: ReplyNavigationType,
+    contentType: ReplyContentType,
     replyHomeUIState: ReplyHomeUIState,
     onDrawerClicked: () -> Unit = {}
 ) {
@@ -124,8 +143,15 @@ fun ReplyAppContent(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.inverseOnSurface)
         ) {
-            ReplyListOnlyContent(replyHomeUIState = replyHomeUIState, modifier = Modifier.weight(1f))
-
+            if (contentType == ReplyContentType.LIST_AND_DETAIL) {
+                ReplyListAndDetailContent(replyHomeUIState = replyHomeUIState,
+                                          modifier = Modifier.weight(1f))
+            } else {
+                ReplyListOnlyContent(
+                    replyHomeUIState = replyHomeUIState,
+                    modifier = Modifier.weight(1f)
+                )
+            }
             AnimatedVisibility(visible = navigationType == ReplyNavigationType.BOTTOM_NAVIGATION) {
                 ReplyBottomNavigationBar()
             }
