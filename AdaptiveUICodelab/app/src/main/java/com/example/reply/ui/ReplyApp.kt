@@ -47,6 +47,7 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -56,10 +57,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.reply.R
+import com.example.reply.ui.utils.DevicePosture
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReplyApp(replyHomeUIState: ReplyHomeUIState) {
+fun ReplyApp(replyHomeUIState: ReplyHomeUIState,
+             windowWidthSize: WindowWidthSizeClass,
+             foldingDevicePosture: DevicePosture) {
     // You will add navigation info here
     ReplyNavigationWrapperUI(replyHomeUIState)
 }
